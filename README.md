@@ -27,7 +27,7 @@ docker run -t --rm -p 8501:8501 \
  `http://localhost:6010/user.html?id=6&model=emb`
 
 # How to enable A/B test  
-* Follow above steps to enable serving multiple Tensorflow models
+* **Follow above steps** to enable serving multiple Tensorflow models
 * Set ``IS_ENABLE_AB_TEST = true`` in class `Config`
 * Query models with different user ID:  
 
