@@ -17,6 +17,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
 
+import static com.sparrowrecsys.online.util.Constants.*;
+
+
 public class HttpClient {
     public static String asyncSinglePostRequest(String host, String body){
         if (null == body || body.isEmpty()){
@@ -108,44 +111,44 @@ public class HttpClient {
         // userReleaseYearStddev"
         //}
         JSONObject instance = new JSONObject();
-        instance.put("userId",10351);
-        instance.put("movieId",52);
+        instance.put(USER_ID,10351);
+        instance.put(MOVIE_ID,52);
 
         /*
         instance.put("timestamp",1254725234);
-        instance.put("userGenre1","Thriller");
+        instance.put(FEATURE_USER_GENRE_1,"Thriller");
         instance.put("userGenre2","Crime");
         instance.put("userGenre3","Drama");
         instance.put("userGenre4","Comedy");
         instance.put("userGenre5","Action");
 
-        instance.put("movieGenre1","Comedy");
-        instance.put("movieGenre2","Drama");
-        instance.put("movieGenre3","Romance");
+        instance.put(FEATURE_MOVIE_GENRE_1,"Comedy");
+        instance.put(FEATURE_MOVIE_GENRE_2,"Drama");
+        instance.put(FEATURE_MOVIE_GENRE_3,"Romance");
 
-        instance.put("userRatedMovie1",608);
+        instance.put(FEATURE_USER_RATED_MOVIE_1,608);
         instance.put("userRatedMovie2",6);
         instance.put("userRatedMovie3",1);
         instance.put("userRatedMovie4",32);
         instance.put("userRatedMovie5",25);
 
-        instance.put("movieId",52);
+        instance.put(MOVIE_ID,52);
         instance.put("rating",4.0);
 
-        instance.put("releaseYear",1995);
-        instance.put("movieRatingCount",2033);
-        instance.put("movieAvgRating",3.54);
-        instance.put("movieRatingStddev",0.91);
-        instance.put("userRatingCount",7);
-        instance.put("userAvgReleaseYear","1995.43");
-        instance.put("userReleaseYearStddev",0.53);
-        instance.put("userAvgRating",3.86);
-        instance.put("userRatingStddev",0.69);*/
+        instance.put(FEATURE_MOVIE_RELEASE_YEAR,1995);
+        instance.put(FEATURE_MOVIE_RATING_COUNT_3,2033);
+        instance.put(FEATURE_MOVIE_AVG_RATING,3.54);
+        instance.put(FEATURE_MOVIE_RATING_STDDEV,0.91);
+        instance.put(FEATURE_USER_RATING_COUNT,7);
+        instance.put(FEATURE_USER_RELEASE_YEAR,"1995.43");
+        instance.put(FEATURE_USER_RELEASE_YEAR_STDDEV,0.53);
+        instance.put(FEATURE_USER_AVG_RATING,3.86);
+        instance.put(FEATURE_USER_RATING_STDDEV,0.69);*/
 
 
         JSONObject instance2 = new JSONObject();
-        instance2.put("userId",10351);
-        instance2.put("movieId",53);
+        instance2.put(USER_ID,10351);
+        instance2.put(MOVIE_ID,53);
 
         JSONArray instances = new JSONArray();
         instances.put(instance);

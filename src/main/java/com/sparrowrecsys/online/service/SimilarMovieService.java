@@ -3,12 +3,13 @@ package com.sparrowrecsys.online.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sparrowrecsys.online.datamanager.Movie;
 import com.sparrowrecsys.online.recprocess.SimilarMovieProcess;
-
+import java.io.IOException;
+import java.util.List;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.List;
+
+import static com.sparrowrecsys.online.util.Constants.*;
 
 /**
  * SimilarMovieService, recommend similar movies given by a specific movie
@@ -23,7 +24,7 @@ public class SimilarMovieService extends HttpServlet {
             response.setHeader("Access-Control-Allow-Origin", "*");
 
             //movieId
-            String movieId = request.getParameter("movieId");
+            String movieId = request.getParameter(MOVIE_ID);
             //number of returned movies
             String size = request.getParameter("size");
             //model of calculating similarity, e.g. embedding, graph-embedding

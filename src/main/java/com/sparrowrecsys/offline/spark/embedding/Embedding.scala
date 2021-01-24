@@ -2,6 +2,8 @@ package com.sparrowrecsys.offline.spark.embedding
 
 import java.io.{BufferedWriter, File, FileWriter}
 
+import com.sparrowrecsys.online.factory.JedisFactory
+import com.sparrowrecsys.online.util.Config.{REDIS_ENDPOINT, REDIS_PORT}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import org.apache.spark.ml.feature.BucketedRandomProjectionLSH
@@ -13,6 +15,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Row, SparkSession}
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.params.SetParams
+import com.sparrowrecsys.online.util.Constants._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -21,8 +24,7 @@ import scala.util.control.Breaks.{break, breakable}
 
 object Embedding {
 
-  val redisEndpoint = "localhost"
-  val redisPort = 6379
+  val jedisFactory = new JedisFactory();
 
   def processItemSequence(sparkSession: SparkSession, rawSampleDataPath: String): RDD[Seq[String]] ={
 
@@ -42,11 +44,11 @@ object Embedding {
     //process rating data then generate rating movie sequence data
     val userSeq = ratingSamples
       .where(col("rating") >= 3.5)
-      .groupBy("userId")
-      .agg(sortUdf(collect_list(struct("movieId", "timestamp"))) as "movieIds")
+      .groupBy(USER_ID)
+      .agg(sortUdf(collect_list(struct(MOVIE_ID, "timestamp"))) as "movieIds")
       .withColumn("movieIdStr", array_join(col("movieIds"), " "))
 
-    userSeq.select("userId", "movieIdStr").show(10, truncate = false)
+    userSeq.select(USER_ID, "movieIdStr").show(10, truncate = false)
     userSeq.select("movieIdStr").rdd.map(r => r.getAs[String]("movieIdStr").split(" ").toSeq)
   }
 
@@ -57,13 +59,13 @@ object Embedding {
 
     val userEmbeddings = new ArrayBuffer[(String, Array[Float])]()
 
-    ratingSamples.collect().groupBy(_.getAs[String]("userId"))
+    ratingSamples.collect().groupBy(_.getAs[String](USER_ID))
       .foreach(user => {
         val userId = user._1
         var userEmb = new Array[Float](embLength)
 
         userEmb = user._2.foldRight[Array[Float]](userEmb)((row, newEmb) => {
-          val movieId = row.getAs[String]("movieId")
+          val movieId = row.getAs[String](MOVIE_ID)
           val movieEmb = word2VecModel.getVectors.get(movieId)
           if(movieEmb.isDefined){
             newEmb.zip(movieEmb.get).map { case (x, y) => x + y }
@@ -86,7 +88,8 @@ object Embedding {
     bw.close()
 
     if (saveToRedis) {
-      val redisClient = new Jedis(redisEndpoint, redisPort)
+      val redisClient = jedisFactory.createRedisClient(REDIS_ENDPOINT, REDIS_PORT);
+
       val params = SetParams.setParams()
       //set ttl to 24hs
       params.ex(60 * 60 * 24)
@@ -98,6 +101,7 @@ object Embedding {
     }
   }
 
+  //noinspection DuplicatedCode
   def trainItem2vec(sparkSession: SparkSession, samples : RDD[Seq[String]], embLength:Int, embOutputFilename:String, saveToRedis:Boolean, redisKeyPrefix:String): Word2VecModel = {
     val word2vec = new Word2Vec()
       .setVectorSize(embLength)
@@ -121,7 +125,8 @@ object Embedding {
     bw.close()
 
     if (saveToRedis) {
-      val redisClient = new Jedis(redisEndpoint, redisPort)
+      val redisClient = jedisFactory.createRedisClient(REDIS_ENDPOINT, REDIS_PORT);
+
       val params = SetParams.setParams()
       //set ttl to 24hs
       params.ex(60 * 60 * 24)
@@ -226,13 +231,13 @@ object Embedding {
   def embeddingLSH(spark:SparkSession, movieEmbMap:Map[String, Array[Float]]): Unit ={
 
     val movieEmbSeq = movieEmbMap.toSeq.map(item => (item._1, Vectors.dense(item._2.map(f => f.toDouble))))
-    val movieEmbDF = spark.createDataFrame(movieEmbSeq).toDF("movieId", "emb")
+    val movieEmbDF = spark.createDataFrame(movieEmbSeq).toDF(MOVIE_ID, EMBEDDING)
 
     //LSH bucket model
     val bucketProjectionLSH = new BucketedRandomProjectionLSH()
       .setBucketLength(0.1)
       .setNumHashTables(3) // number of hash function
-      .setInputCol("emb")
+      .setInputCol(EMBEDDING)
       .setOutputCol("bucketId")
 
     val bucketModel = bucketProjectionLSH.fit(movieEmbDF)
@@ -275,9 +280,9 @@ object Embedding {
     val embLength = 10
 
     val samples = processItemSequence(spark, rawSampleDataPath)
-    val model = trainItem2vec(spark, samples, embLength, "item2vecEmb.csv", saveToRedis = true, "i2vEmb")
+    val model = trainItem2vec(spark, samples, embLength, "item2vecEmb.csv", saveToRedis = true, REDIS_KEY_PREFIX_ITEM2VEC_EMBEDDING)
     graphEmb(samples, spark, embLength, "itemGraphEmb.csv", saveToRedis = true, "graphEmb")
-    generateUserEmb(spark, rawSampleDataPath, model, embLength, "userEmb.csv", saveToRedis = true, "uEmb")
+    generateUserEmb(spark, rawSampleDataPath, model, embLength, "userEmb.csv", saveToRedis = true, REDIS_KEY_PREFIX_USER_EMBEDDING)
     println("Embedding generation finished!")
   }
 }

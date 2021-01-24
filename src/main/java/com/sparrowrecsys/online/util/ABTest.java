@@ -1,12 +1,14 @@
 package com.sparrowrecsys.online.util;
 
+import static com.sparrowrecsys.online.util.Constants.*;
+
 public class ABTest {
     final static int trafficSplitNumber = 5;
 
-    final static String bucketAModel = "emb";
-    final static String bucketBModel = "neuralcf";
+    final static String bucketAModel = EMBEDDING;
+    final static String bucketBModel = NEURAL_CF;
 
-    final static String defaultModel = "emb";
+    final static String defaultModel = EMBEDDING;
 
     public static String getConfigByUserId(String userId){
         if (null == userId || userId.isEmpty()){

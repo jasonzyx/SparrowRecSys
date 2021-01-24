@@ -2,6 +2,7 @@ package com.sparrowrecsys.online.recprocess;
 
 import com.sparrowrecsys.online.datamanager.DataManager;
 import com.sparrowrecsys.online.datamanager.Movie;
+import static com.sparrowrecsys.online.util.Constants.*;
 import java.util.*;
 
 /**
@@ -73,7 +74,7 @@ public class SimilarMovieProcess {
             candidateMap.put(candidate.getMovieId(), candidate);
         }
 
-        List<Movie> latestCandidates = DataManager.getInstance().getMovies(100, "releaseYear");
+        List<Movie> latestCandidates = DataManager.getInstance().getMovies(100, FEATURE_MOVIE_RELEASE_YEAR);
         for (Movie candidate : latestCandidates){
             candidateMap.put(candidate.getMovieId(), candidate);
         }
@@ -123,7 +124,7 @@ public class SimilarMovieProcess {
         for (Movie candidate : candidates){
             double similarity;
             switch (model){
-                case "emb":
+                case EMBEDDING:
                     similarity = calculateEmbSimilarScore(movie, candidate);
                     break;
                 default:

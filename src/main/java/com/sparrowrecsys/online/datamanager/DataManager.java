@@ -2,9 +2,14 @@ package com.sparrowrecsys.online.datamanager;
 
 import com.sparrowrecsys.online.util.Config;
 import com.sparrowrecsys.online.util.Utility;
-
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Scanner;
+import java.util.Set;
+
+import static com.sparrowrecsys.online.util.Constants.*;
 
 /**
  * DataManager is an utility class, takes charge of all data loading logic.
@@ -255,7 +260,7 @@ public class DataManager {
             List<Movie> movies = new ArrayList<>(this.genreReverseIndexMap.get(genre));
             switch (sortBy){
                 case "rating":movies.sort((m1, m2) -> Double.compare(m2.getAverageRating(), m1.getAverageRating()));break;
-                case "releaseYear": movies.sort((m1, m2) -> Integer.compare(m2.getReleaseYear(), m1.getReleaseYear()));break;
+                case FEATURE_MOVIE_RELEASE_YEAR: movies.sort((m1, m2) -> Integer.compare(m2.getReleaseYear(), m1.getReleaseYear()));break;
                 default:
             }
 
@@ -272,7 +277,7 @@ public class DataManager {
             List<Movie> movies = new ArrayList<>(movieMap.values());
             switch (sortBy){
                 case "rating":movies.sort((m1, m2) -> Double.compare(m2.getAverageRating(), m1.getAverageRating()));break;
-                case "releaseYear": movies.sort((m1, m2) -> Integer.compare(m2.getReleaseYear(), m1.getReleaseYear()));break;
+                case FEATURE_MOVIE_RELEASE_YEAR: movies.sort((m1, m2) -> Integer.compare(m2.getReleaseYear(), m1.getReleaseYear()));break;
                 default:
             }
 

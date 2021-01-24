@@ -1,17 +1,21 @@
 package com.sparrowrecsys.online.recprocess;
 
 import com.sparrowrecsys.online.datamanager.DataManager;
-import com.sparrowrecsys.online.datamanager.User;
 import com.sparrowrecsys.online.datamanager.Movie;
 import com.sparrowrecsys.online.datamanager.RedisClient;
+import com.sparrowrecsys.online.datamanager.User;
 import com.sparrowrecsys.online.util.Config;
 import com.sparrowrecsys.online.util.Utility;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.*;
-
-import static com.sparrowrecsys.online.util.HttpClient.asyncSinglePostRequest;
+import static com.sparrowrecsys.online.util.Constants.*;
+import static com.sparrowrecsys.online.util.HttpClient.*;
 
 /**
  * Recommendation process of similar movies
@@ -44,7 +48,7 @@ public class RecForYouProcess {
         }
 
         if (Config.IS_LOAD_USER_FEATURE_FROM_REDIS){
-            String userFeaturesKey = "uf:" + userId;
+            String userFeaturesKey = USER_FEATURE_PREFIX + userId;
             Map<String, String> userFeatures = RedisClient.getInstance().hgetAll(userFeaturesKey);
             if (null != userFeatures){
                 user.setUserFeatures(userFeatures);
@@ -71,16 +75,16 @@ public class RecForYouProcess {
 
         System.out.println("[DEBUG]: the requested model is: " + model);
         switch (model){
-            case "emb":
+            case EMBEDDING:
                 for (Movie candidate : candidates){
                     double similarity = calculateEmbSimilarScore(user, candidate);
                     candidateScoreMap.put(candidate, similarity);
                 }
                 break;
-            case "neuralcf":
+            case NEURAL_CF:
                 callNeuralCFTFServing(user, candidates, candidateScoreMap);
                 break;
-            case "widendeep":
+            case WIDE_N_DEEP:
                 System.out.println("[DEBUG]: send out widendeep request");
                 callWideNDeepServing(user, candidates, candidateScoreMap);
                 break;
@@ -123,8 +127,9 @@ public class RecForYouProcess {
         JSONArray instances = new JSONArray();
         for (Movie m : candidates){
             JSONObject instance = new JSONObject();
-            instance.put("userId", user.getUserId());
-            instance.put("movieId", m.getMovieId());
+            instance.put(USER_ID, user.getUserId());
+
+            instance.put(MOVIE_ID, m.getMovieId());
 
             instances.put(instance);
         }
@@ -160,26 +165,26 @@ public class RecForYouProcess {
         JSONArray instances = new JSONArray();
         for (Movie m : candidates){
             JSONObject instance = new JSONObject();
-            instance.put("userId", user.getUserId());
-            instance.put("movieId", m.getMovieId());
+            instance.put(USER_ID, user.getUserId());
+            instance.put(MOVIE_ID, m.getMovieId());
             // movie features
-            instance.put("movieGenre1",m.getMovieFeatures().get("movieGenre1"));
-            instance.put("movieGenre2",m.getMovieFeatures().get("movieGenre2"));
-            instance.put("movieGenre3",m.getMovieFeatures().get("movieGenre3"));
-            instance.put("releaseYear", Integer.parseInt(m.getMovieFeatures().get("releaseYear")));
-            instance.put("movieRatingCount", Integer.parseInt(m.getMovieFeatures().get("movieRatingCount")));
-            instance.put("movieAvgRating", Float.parseFloat(m.getMovieFeatures().get("movieAvgRating")));
-            instance.put("movieRatingStddev", Float.parseFloat(m.getMovieFeatures().get("movieRatingStddev")));
+            instance.put(FEATURE_MOVIE_GENRE_1,m.getMovieFeatures().get(FEATURE_MOVIE_GENRE_1));
+            instance.put(FEATURE_MOVIE_GENRE_2,m.getMovieFeatures().get(FEATURE_MOVIE_GENRE_2));
+            instance.put(FEATURE_MOVIE_GENRE_3,m.getMovieFeatures().get(FEATURE_MOVIE_GENRE_3));
+            instance.put(FEATURE_MOVIE_RELEASE_YEAR, Integer.parseInt(m.getMovieFeatures().get(FEATURE_MOVIE_RELEASE_YEAR)));
+            instance.put(FEATURE_MOVIE_RATING_COUNT, Integer.parseInt(m.getMovieFeatures().get(FEATURE_MOVIE_RATING_COUNT)));
+            instance.put(FEATURE_MOVIE_AVG_RATING, Float.parseFloat(m.getMovieFeatures().get(FEATURE_MOVIE_AVG_RATING)));
+            instance.put(FEATURE_MOVIE_RATING_STDDEV, Float.parseFloat(m.getMovieFeatures().get(FEATURE_MOVIE_RATING_STDDEV)));
             // user features
-            instance.put("userRatingCount", Integer.parseInt(user.getUserFeatures().get("userRatingCount")));
-            instance.put("userAvgRating", Float.parseFloat(user.getUserFeatures().get("userAvgRating")));
-            instance.put("userGenre1", user.getUserFeatures().get("userGenre1"));
-            instance.put("userGenre2", user.getUserFeatures().get("userGenre2"));
-            instance.put("userGenre3", user.getUserFeatures().get("userGenre3"));
-            instance.put("userGenre4", user.getUserFeatures().get("userGenre4"));
-            instance.put("userGenre5", user.getUserFeatures().get("userGenre5"));
-            instance.put("userRatingStddev", Float.parseFloat(user.getUserFeatures().get("userRatingStddev")));
-            instance.put("userRatedMovie1", Integer.parseInt(user.getUserFeatures().get("userRatedMovie1")));
+            instance.put(FEATURE_USER_RATING_COUNT, Integer.parseInt(user.getUserFeatures().get(FEATURE_USER_RATING_COUNT)));
+            instance.put(FEATURE_USER_AVG_RATING, Float.parseFloat(user.getUserFeatures().get(FEATURE_USER_AVG_RATING)));
+            instance.put(FEATURE_USER_GENRE_1, user.getUserFeatures().get(FEATURE_USER_GENRE_1));
+            instance.put(FEATURE_USER_GENRE_2, user.getUserFeatures().get(FEATURE_USER_GENRE_2));
+            instance.put(FEATURE_USER_GENRE_3, user.getUserFeatures().get(FEATURE_USER_GENRE_3));
+            instance.put(FEATURE_USER_GENRE_4, user.getUserFeatures().get(FEATURE_USER_GENRE_4));
+            instance.put(FEATURE_USER_GENRE_5, user.getUserFeatures().get(FEATURE_USER_GENRE_5));
+            instance.put(FEATURE_USER_RATING_STDDEV, Float.parseFloat(user.getUserFeatures().get(FEATURE_USER_RATING_STDDEV)));
+            instance.put(FEATURE_USER_RATED_MOVIE_1, Integer.parseInt(user.getUserFeatures().get(FEATURE_USER_RATED_MOVIE_1)));
 
             instances.put(instance);
         }

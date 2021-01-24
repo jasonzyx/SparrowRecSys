@@ -8,13 +8,15 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
 
+import com.sparrowrecsys.online.util.Constants._;
+
 object FeatureEngineering {
   /**
    * One-hot encoding example function
    * @param samples movie samples dataframe
    */
   def oneHotEncoderExample(samples:DataFrame): Unit ={
-    val samplesWithIdNumber = samples.withColumn("movieIdNumber", col("movieId").cast(sql.types.IntegerType))
+    val samplesWithIdNumber = samples.withColumn("movieIdNumber", col(MOVIE_ID).cast(sql.types.IntegerType))
 
     val oneHotEncoder = new OneHotEncoderEstimator()
       .setInputCols(Array("movieIdNumber"))
@@ -33,7 +35,7 @@ object FeatureEngineering {
    * @param samples movie samples dataframe
    */
   def multiHotEncoderExample(samples:DataFrame): Unit ={
-    val samplesWithGenre = samples.select(col("movieId"), col("title"),explode(split(col("genres"), "\\|").cast("array<string>")).as("genre"))
+    val samplesWithGenre = samples.select(col(MOVIE_ID), col("title"),explode(split(col("genres"), "\\|").cast("array<string>")).as("genre"))
     val genreIndexer = new StringIndexer().setInputCol("genre").setOutputCol("genreIndex")
 
     val stringIndexerModel : StringIndexerModel = genreIndexer.fit(samplesWithGenre)
@@ -44,7 +46,7 @@ object FeatureEngineering {
     val indexSize = genreIndexSamples.agg(max(col("genreIndexInt"))).head().getAs[Int](0) + 1
 
     val processedSamples =  genreIndexSamples
-      .groupBy(col("movieId")).agg(collect_list("genreIndexInt").as("genreIndexes"))
+      .groupBy(col(MOVIE_ID)).agg(collect_list("genreIndexInt").as("genreIndexes"))
         .withColumn("indexSize", typedLit(indexSize))
 
     val finalSample = processedSamples.withColumn("vector", array2vec(col("genreIndexes"),col("indexSize")))
@@ -63,7 +65,7 @@ object FeatureEngineering {
     samples.show(10)
 
     //calculate average movie rating score and rating count
-    val movieFeatures = samples.groupBy(col("movieId"))
+    val movieFeatures = samples.groupBy(col(MOVIE_ID))
       .agg(count(lit(1)).as("ratingCount"),
         avg(col("rating")).as("avgRating"),
         variance(col("rating")).as("ratingVar"))

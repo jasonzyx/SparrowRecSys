@@ -1,15 +1,22 @@
 package com.sparrowrecsys.online;
 
 import com.sparrowrecsys.online.datamanager.DataManager;
-import com.sparrowrecsys.online.service.*;
+import com.sparrowrecsys.online.service.MovieService;
+import com.sparrowrecsys.online.service.RecForYouService;
+import com.sparrowrecsys.online.service.RecommendationService;
+import com.sparrowrecsys.online.service.SimilarMovieService;
+import com.sparrowrecsys.online.service.UserService;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.URL;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.resource.Resource;
-import java.net.InetSocketAddress;
-import java.net.URI;
-import java.net.URL;
+
+import static com.sparrowrecsys.online.util.Constants.*;
+import static com.sparrowrecsys.online.util.Config.*;
 
 /***
  * Recsys Server, end point of online recommendation service
@@ -22,11 +29,10 @@ public class RecSysServer {
     }
 
     //recsys server port number
-    private static final int DEFAULT_PORT = 6010;
 
     public void run() throws Exception{
 
-        int port = DEFAULT_PORT;
+        int port = DEFAULT_REC_SYS_PORT;
         try {
             port = Integer.parseInt(System.getenv("PORT"));
         } catch (NumberFormatException ignored) {}
@@ -51,7 +57,7 @@ public class RecSysServer {
                 webRootUri.getPath() + "sampledata/links.csv",webRootUri.getPath() + "sampledata/ratings.csv",
                 webRootUri.getPath() + "modeldata/item2vecEmb.csv",
                 webRootUri.getPath() + "modeldata/userEmb.csv",
-                "i2vEmb", "uEmb");
+                REDIS_KEY_PREFIX_ITEM2VEC_EMBEDDING, REDIS_KEY_PREFIX_USER_EMBEDDING);
 
         //create server context
         ServletContextHandler context = new ServletContextHandler();

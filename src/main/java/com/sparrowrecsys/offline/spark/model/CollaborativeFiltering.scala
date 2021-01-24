@@ -7,6 +7,8 @@ import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 
+import com.sparrowrecsys.online.util.Constants._
+
 object CollaborativeFiltering {
 
   def main(args: Array[String]): Unit = {
@@ -20,8 +22,8 @@ object CollaborativeFiltering {
     val toInt = udf[Int, String]( _.toInt)
     val toFloat = udf[Double, String]( _.toFloat)
     val ratingSamples = spark.read.format("csv").option("header", "true").load(ratingResourcesPath.getPath)
-      .withColumn("userIdInt", toInt(col("userId")))
-      .withColumn("movieIdInt", toInt(col("movieId")))
+      .withColumn("userIdInt", toInt(col(USER_ID)))
+      .withColumn("movieIdInt", toInt(col(MOVIE_ID)))
       .withColumn("ratingFloat", toFloat(col("rating")))
 
     val Array(training, test) = ratingSamples.randomSplit(Array(0.8, 0.2))
