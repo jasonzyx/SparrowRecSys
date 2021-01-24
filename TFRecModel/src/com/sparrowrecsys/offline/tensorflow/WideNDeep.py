@@ -2,11 +2,11 @@ import tensorflow as tf
 
 # Training samples path, change to your local path
 training_samples_file_path = tf.keras.utils.get_file("trainingSamples.csv",
-                                                     "file:///Users/zhewang/Workspace/SparrowRecSys/src/main"
+                                                     "file:///Users/zhiyxu/workspace/SparrowRecSys/src/main"
                                                      "/resources/webroot/sampledata/trainingSamples.csv")
 # Test samples path, change to your local path
 test_samples_file_path = tf.keras.utils.get_file("testSamples.csv",
-                                                 "file:///Users/zhewang/Workspace/SparrowRecSys/src/main"
+                                                 "file:///Users/zhiyxu/workspace/SparrowRecSys/src/main"
                                                  "/resources/webroot/sampledata/testSamples.csv")
 
 
@@ -127,3 +127,17 @@ for prediction, goodRating in zip(predictions[:12], list(test_dataset)[0][1][:12
     print("Predicted good rating: {:.2%}".format(prediction[0]),
           " | Actual rating label: ",
           ("Good Rating" if bool(goodRating) else "Bad Rating"))
+
+tf.keras.models.save_model(
+    model,
+    "file:///Users/zhiyxu/workspace/SparrowRecSys/src/main/resources/webroot/modeldata/widendeep/002",
+    overwrite=True,
+    include_optimizer=True,
+    save_format=None,
+    signatures=None,
+    options=None
+)
+
+print("finish saving tf model")
+# run below command to serve model
+# docker run -t --rm -p 8501:8501 -v "/Users/zhiyxu/workspace/SparrowRecSys/src/main/resources/webroot/modeldata/widendeep:/models/recmodel" -e MODEL_NAME=recmodel tensorflow/serving &

@@ -10,7 +10,7 @@ import redis.clients.jedis.Jedis
 import redis.clients.jedis.params.SetParams
 
 import scala.collection.immutable.ListMap
-import scala.collection.{JavaConversions, mutable}
+import scala.collection.{JavaConversions, JavaConverters, mutable}
 
 object FeatureEngForRecModel {
 
@@ -284,8 +284,8 @@ object FeatureEngForRecModel {
     splitAndSaveTrainingTestSamples(samplesWithUserFeatures, "/webroot/sampledata")
 
     //save user features and item features to redis for online inference
-    //extractAndSaveUserFeaturesToRedis(samplesWithUserFeatures)
-    //extractAndSaveMovieFeaturesToRedis(samplesWithUserFeatures)
+    extractAndSaveUserFeaturesToRedis(samplesWithUserFeatures)
+    extractAndSaveMovieFeaturesToRedis(samplesWithUserFeatures)
     spark.close()
   }
 

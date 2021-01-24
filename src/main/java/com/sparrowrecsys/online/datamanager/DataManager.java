@@ -268,7 +268,7 @@ public class DataManager {
     }
 
     //get top N movies order by sortBy method
-    public List<Movie> getMovies(int size, String sortBy){
+    public List<Movie> getMovies(int size, String sortBy) {
             List<Movie> movies = new ArrayList<>(movieMap.values());
             switch (sortBy){
                 case "rating":movies.sort((m1, m2) -> Double.compare(m2.getAverageRating(), m1.getAverageRating()));break;

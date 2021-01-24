@@ -2,11 +2,11 @@ import tensorflow as tf
 
 # Training samples path, change to your local path
 training_samples_file_path = tf.keras.utils.get_file("trainingSamples.csv",
-                                                     "file:///Users/zhewang/Workspace/SparrowRecSys/src/main"
+                                                     "file:///Users/zhiyxu/workspace/SparrowRecSys/src/main"
                                                      "/resources/webroot/sampledata/trainingSamples.csv")
 # Test samples path, change to your local path
 test_samples_file_path = tf.keras.utils.get_file("testSamples.csv",
-                                                 "file:///Users/zhewang/Workspace/SparrowRecSys/src/main"
+                                                 "file:///Users/zhiyxu/workspace/SparrowRecSys/src/main"
                                                  "/resources/webroot/sampledata/testSamples.csv")
 
 
@@ -49,6 +49,7 @@ for feature, vocab in GENRE_FEATURES.items():
         key=feature, vocabulary_list=vocab)
     emb_col = tf.feature_column.embedding_column(cat_col, 10)
     categorical_columns.append(emb_col)
+
 # movie id embedding feature
 movie_col = tf.feature_column.categorical_column_with_identity(key='movieId', num_buckets=1001)
 movie_emb_col = tf.feature_column.embedding_column(movie_col, 10)
@@ -66,7 +67,32 @@ numerical_columns = [tf.feature_column.numeric_column('releaseYear'),
                      tf.feature_column.numeric_column('movieRatingStddev'),
                      tf.feature_column.numeric_column('userRatingCount'),
                      tf.feature_column.numeric_column('userAvgRating'),
-                     tf.feature_column.numeric_column('userRatingStddev')]
+                     tf.feature_column.numeric_column('userRatingStddev')
+                     ]
+
+# define input for keras model
+inputs = {
+    'movieAvgRating': tf.keras.layers.Input(name='movieAvgRating', shape=(), dtype='float32'),
+    'movieRatingStddev': tf.keras.layers.Input(name='movieRatingStddev', shape=(), dtype='float32'),
+    'movieRatingCount': tf.keras.layers.Input(name='movieRatingCount', shape=(), dtype='int32'),
+    'userAvgRating': tf.keras.layers.Input(name='userAvgRating', shape=(), dtype='float32'),
+    'userRatingStddev': tf.keras.layers.Input(name='userRatingStddev', shape=(), dtype='float32'),
+    'userRatingCount': tf.keras.layers.Input(name='userRatingCount', shape=(), dtype='int32'),
+    'releaseYear': tf.keras.layers.Input(name='releaseYear', shape=(), dtype='int32'),
+
+    'movieId': tf.keras.layers.Input(name='movieId', shape=(), dtype='int32'),
+    'userId': tf.keras.layers.Input(name='userId', shape=(), dtype='int32'),
+
+    'userGenre1': tf.keras.layers.Input(name='userGenre1', shape=(), dtype='string'),
+    'userGenre2': tf.keras.layers.Input(name='userGenre2', shape=(), dtype='string'),
+    'userGenre3': tf.keras.layers.Input(name='userGenre3', shape=(), dtype='string'),
+    'userGenre4': tf.keras.layers.Input(name='userGenre4', shape=(), dtype='string'),
+    'userGenre5': tf.keras.layers.Input(name='userGenre5', shape=(), dtype='string'),
+    'movieGenre1': tf.keras.layers.Input(name='movieGenre1', shape=(), dtype='string'),
+    'movieGenre2': tf.keras.layers.Input(name='movieGenre2', shape=(), dtype='string'),
+    'movieGenre3': tf.keras.layers.Input(name='movieGenre3', shape=(), dtype='string'),
+}
+
 
 # embedding + MLP model architecture
 model = tf.keras.Sequential([
@@ -96,3 +122,17 @@ for prediction, goodRating in zip(predictions[:12], list(test_dataset)[0][1][:12
     print("Predicted good rating: {:.2%}".format(prediction[0]),
           " | Actual rating label: ",
           ("Good Rating" if bool(goodRating) else "Bad Rating"))
+
+tf.keras.models.save_model(
+    model,
+    "file:///Users/zhiyxu/workspace/SparrowRecSys/src/main/resources/webroot/modeldata/embeddingmlp/002",
+    overwrite=True,
+    include_optimizer=True,
+    save_format=None,
+    signatures=None,
+    options=None
+)
+
+print("finish saving tf model")
+# run below command to serve model
+# docker run -t --rm -p 8501:8501 -v "/Users/zhiyxu/workspace/SparrowRecSys/src/main/resources/webroot/modeldata/embeddingmlp:/models/recmodel" -e MODEL_NAME=recmodel tensorflow/serving &

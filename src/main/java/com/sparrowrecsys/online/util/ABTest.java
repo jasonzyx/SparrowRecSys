@@ -4,7 +4,7 @@ public class ABTest {
     final static int trafficSplitNumber = 5;
 
     final static String bucketAModel = "emb";
-    final static String bucketBModel = "nerualcf";
+    final static String bucketBModel = "neuralcf";
 
     final static String defaultModel = "emb";
 
