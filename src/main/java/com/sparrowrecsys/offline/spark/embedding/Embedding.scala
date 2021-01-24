@@ -280,9 +280,18 @@ object Embedding {
     val embLength = 10
 
     val samples = processItemSequence(spark, rawSampleDataPath)
+
+    val t0 = System.nanoTime()
     val model = trainItem2vec(spark, samples, embLength, "item2vecEmb.csv", saveToRedis = true, REDIS_KEY_PREFIX_ITEM2VEC_EMBEDDING)
+    val t1 = System.nanoTime()
     graphEmb(samples, spark, embLength, "itemGraphEmb.csv", saveToRedis = true, "graphEmb")
+    val t2 = System.nanoTime()
     generateUserEmb(spark, rawSampleDataPath, model, embLength, "userEmb.csv", saveToRedis = true, REDIS_KEY_PREFIX_USER_EMBEDDING)
+    val t3 = System.nanoTime()
     println("Embedding generation finished!")
+    println("trainItem2vec: " + (t1 - t0)/1e9d + " sec")
+    println("graphEmb: " + (t2 - t1)/1e9d + " sec")
+    println("generateUserEmb: " + (t3 - t2)/1e9d + " sec")
+
   }
 }
