@@ -1,11 +1,10 @@
 # Advanced SparrowRecSys
 This is a movie recommender system that's built on top of [SparrowRecSys](https://github.com/wzhe06/SparrowRecSys). 
 More features have been built here, including:
-* Serve Wide&Deep, EmbeddingMLP, NeuralCf
+* Serve multiple models (e.g., Wide&Deep, EmbeddingMLP, NeuralCf) online simultaneously
 * Train Embedding MLP offline with modification to prepare serving
-* Fetch feature online from Redis store
-* Simultaneously serve multiple Tensorflow models and versions
-* ENABLE A/B test on multiple models
+* Fetch features online from Redis store
+* Enable A/B test on multiple models
 * Major refactor to scale code
 
 # How to serve multiple Tensorflow models 
@@ -29,7 +28,7 @@ docker run -t --rm -p 8501:8501 \
 # How to enable A/B test  
 * **Follow above steps** to enable serving multiple Tensorflow models
 * Set ``IS_ENABLE_AB_TEST = true`` in class `Config`
-* Query models with different user ID:  
+* Query models with different user IDs:  
 
 ``http://localhost:6010/user.html?id=5``  
 ``http://localhost:6010/user.html?id=7``   
