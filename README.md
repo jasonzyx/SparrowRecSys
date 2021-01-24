@@ -1,5 +1,5 @@
 # Advanced SparrowRecSys
-This is a movie recommender system that's build on top of [SparrowRecSys](https://github.com/wzhe06/SparrowRecSys). 
+This is a movie recommender system that's built on top of [SparrowRecSys](https://github.com/wzhe06/SparrowRecSys). 
 More features have been built here, including:
 * Serving Wide&Deep
 * Training Embedding MLP and serving
@@ -16,7 +16,14 @@ docker run -t --rm -p 8501:8501 \
     -v "/Users/zhiyxu/workspace/SparrowRecSys/src/main/resources/webroot/modeldata/:/models/" 
     tensorflow/serving --model_config_file=/models/models.config 
     --model_config_file_poll_wait_seconds=60``
+* Go to below to query different models
+ `http://localhost:6010/user.html?id=6&model=widendeep`
+ `http://localhost:6010/user.html?id=6&model=neuralcf`
+ `http://localhost:6010/user.html?id=6&model=embeddingmlp`
+ `http://localhost:6010/user.html?id=6&model=emb`
 
+# Additional Information 
+For more details please see [SparrowRecSys](https://github.com/wzhe06/SparrowRecSys).
 
 ## 环境要求
 * Java 8
