@@ -5,6 +5,7 @@ More features have been built here, including:
 * Train Embedding MLP offline with modification to prepare serving
 * Fetch feature online from Redis store
 * Simultaneously serve multiple Tensorflow models and versions
+* ENABLE A/B test on multiple models
 * Major refactor to scale code
 
 # How to serve multiple Tensorflow models 
