@@ -11,16 +11,31 @@ More features have been built here, including:
 * Fire up Redis (follow steps [here](https://redis.io/download))
 * Make sure the corresponding model folders (e.g., `embeddingmlp`, `widendeeep`) exist under directory ``SparrowRecSys/src/main/resources/webroot/modeldata``
 * Start Tensorflow serving (multi-model, multi-version are configurable in `models.config`)  
+
 ``
 docker run -t --rm -p 8501:8501 \
     -v "/Users/zhiyxu/workspace/SparrowRecSys/src/main/resources/webroot/modeldata/:/models/" 
     tensorflow/serving --model_config_file=/models/models.config 
     --model_config_file_poll_wait_seconds=60``
+    
 * Go to below to query different models   
+
  `http://localhost:6010/user.html?id=6&model=widendeep`  
  `http://localhost:6010/user.html?id=6&model=neuralcf`  
  `http://localhost:6010/user.html?id=6&model=embeddingmlp`  
  `http://localhost:6010/user.html?id=6&model=emb`
+
+# How to enable A/B test  
+* Follow above steps to enable serving multiple Tensorflow models
+* Set ``IS_ENABLE_AB_TEST = true`` in class `Config`
+* Query models with different user ID:  
+
+``http://localhost:6010/user.html?id=5``  
+``http://localhost:6010/user.html?id=7``   
+``http://localhost:6010/user.html?id=8``  
+
+You should be able to see from running log on which model is being triggered for each user ID.
+ 
 
 # Additional Information 
 For more details please see [SparrowRecSys](https://github.com/wzhe06/SparrowRecSys).
