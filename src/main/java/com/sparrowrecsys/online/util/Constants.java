@@ -37,6 +37,7 @@ public class Constants {
   public static final String EMBEDDING = "emb";
   public static final String WIDE_N_DEEP = "widendeep";
   public static final String NEURAL_CF = "neuralcf";
+  public static final String EMBEDDING_MLP = "embeddingmlp";
 
 
 

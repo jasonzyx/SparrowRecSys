@@ -95,12 +95,19 @@ inputs = {
 
 
 # embedding + MLP model architecture
-model = tf.keras.Sequential([
-    tf.keras.layers.DenseFeatures(numerical_columns + categorical_columns),
-    tf.keras.layers.Dense(128, activation='relu'),
-    tf.keras.layers.Dense(128, activation='relu'),
-    tf.keras.layers.Dense(1, activation='sigmoid'),
-])
+# model = tf.keras.Sequential([
+#     tf.keras.layers.DenseFeatures(numerical_columns + categorical_columns),
+#     tf.keras.layers.Dense(128, activation='relu'),
+#     tf.keras.layers.Dense(128, activation='relu'),
+#     tf.keras.layers.Dense(1, activation='sigmoid'),
+# ])
+
+input_layer = tf.keras.layers.DenseFeatures(numerical_columns + categorical_columns)(inputs)
+dense_layer_1 = tf.keras.layers.Dense(128, activation='relu')(input_layer)
+dense_layer_2 = tf.keras.layers.Dense(128, activation='relu')(dense_layer_1)
+output_layer = tf.keras.layers.Dense(1, activation='sigmoid')(dense_layer_2)
+
+model = tf.keras.Model(inputs, output_layer)
 
 # compile the model, set loss function, optimizer and evaluation metrics
 model.compile(

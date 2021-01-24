@@ -145,7 +145,7 @@ object FeatureEngForRecModel {
     val movieFeaturePrefix = "mf:"
 
     val jedisFactory = new JedisFactory();
-    val redisClient = jedisFactory.createRedisClient(REDIS_ENDPOINT, REDIS_PORT);
+    val redisClient = jedisFactory.createRedisClient(REDIS_ENDPOINT, REDIS_PORT)
 
     val params = SetParams.setParams()
     //set ttl to 24hs * 30
@@ -206,7 +206,6 @@ object FeatureEngForRecModel {
     test.repartition(1).write.option("header", "true").mode(SaveMode.Overwrite)
       .csv(sampleResourcesPath+"/testSamples")
   }
-
 
   def extractAndSaveUserFeaturesToRedis(samples:DataFrame): DataFrame = {
     val userLatestSamples = samples.withColumn("userRowNum", row_number()

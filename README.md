@@ -1,8 +1,22 @@
-# SparrowRecSys
-SparrowRecSys是一个电影推荐系统，名字SparrowRecSys（麻雀推荐系统），取自“麻雀虽小，五脏俱全”之意。项目是一个基于maven的混合语言项目，同时包含了TensorFlow，Spark，Jetty Server等推荐系统的不同模块。希望你能够利用SparrowRecSys进行推荐系统的学习，并有机会一起完善它。
+# Advanced SparrowRecSys
+This is a movie recommender system that's build on top of [SparrowRecSys](https://github.com/wzhe06/SparrowRecSys). 
+More features have been built here, including:
+* Serving Wide&Deep
+* Training Embedding MLP and serving
+* Online fetch feature from Redis store
+* Simultaneously serve multiple tensorflow models and versions
+* Major refactor to scale code
 
-## 基于SparrowRecSys的实践课程
-受极客时间邀请开设 [深度学习推荐系统实战](http://gk.link/a/10lyE) 课程，详细讲解了SparrowRecSys的所有技术细节，覆盖了深度学习模型结构，模型训练，特征工程，模型评估，模型线上服务及推荐服务器内部逻辑等模块。
+# How to serve multiple Tensorflow models 
+* Fire up Redis (follow steps [here](https://redis.io/download))
+* Make sure the corresponding model folders (e.g., `embeddingmlp`, `widendeeep`) exist under directory ``SparrowRecSys/src/main/resources/webroot/modeldata``
+* Start Tensorflow serving (multi-model, multi-version are configurable in `models.config`)
+``
+docker run -t --rm -p 8501:8501 \
+    -v "/Users/zhiyxu/workspace/SparrowRecSys/src/main/resources/webroot/modeldata/:/models/" 
+    tensorflow/serving --model_config_file=/models/models.config 
+    --model_config_file_poll_wait_seconds=60``
+
 
 ## 环境要求
 * Java 8

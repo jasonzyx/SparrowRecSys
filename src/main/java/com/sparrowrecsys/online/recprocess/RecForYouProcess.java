@@ -7,8 +7,10 @@ import com.sparrowrecsys.online.datamanager.User;
 import com.sparrowrecsys.online.util.Config;
 import com.sparrowrecsys.online.util.Utility;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import org.json.JSONArray;
@@ -39,7 +41,7 @@ public class RecForYouProcess {
         List<Movie> candidates = DataManager.getInstance().getMovies(CANDIDATE_SIZE, "rating");
 
         //load user emb from redis if data source is redis
-        if (Config.EMB_DATA_SOURCE.equals(Config.DATA_SOURCE_REDIS)){
+        if (Config.EMB_DATA_SOURCE.equals(Config.DATA_SOURCE_REDIS)) {
             String userEmbKey = "uEmb:" + userId;
             String userEmb = RedisClient.getInstance().get(userEmbKey);
             if (null != userEmb){
@@ -47,7 +49,7 @@ public class RecForYouProcess {
             }
         }
 
-        if (Config.IS_LOAD_USER_FEATURE_FROM_REDIS){
+        if (Config.IS_LOAD_USER_FEATURE_FROM_REDIS) {
             String userFeaturesKey = USER_FEATURE_PREFIX + userId;
             Map<String, String> userFeatures = RedisClient.getInstance().hgetAll(userFeaturesKey);
             if (null != userFeatures){
@@ -72,27 +74,23 @@ public class RecForYouProcess {
      */
     public static List<Movie> ranker(User user, List<Movie> candidates, String model){
         HashMap<Movie, Double> candidateScoreMap = new HashMap<>();
+        HashSet<String> modelSet = new HashSet<>(Arrays.asList(NEURAL_CF, WIDE_N_DEEP, EMBEDDING_MLP));
 
         System.out.println("[DEBUG]: the requested model is: " + model);
-        switch (model){
-            case EMBEDDING:
-                for (Movie candidate : candidates){
-                    double similarity = calculateEmbSimilarScore(user, candidate);
-                    candidateScoreMap.put(candidate, similarity);
-                }
-                break;
-            case NEURAL_CF:
-                callNeuralCFTFServing(user, candidates, candidateScoreMap);
-                break;
-            case WIDE_N_DEEP:
-                System.out.println("[DEBUG]: send out widendeep request");
-                callWideNDeepServing(user, candidates, candidateScoreMap);
-                break;
-            default:
-                //default ranking in candidate set
-                for (int i = 0 ; i < candidates.size(); i++){
-                    candidateScoreMap.put(candidates.get(i), (double)(candidates.size() - i));
-                }
+        if (EMBEDDING.equals(model)) {
+            System.out.println("[DEBUG] now using model: " + EMBEDDING);
+            for (Movie candidate : candidates){
+                double similarity = calculateEmbSimilarScore(user, candidate);
+                candidateScoreMap.put(candidate, similarity);
+            }
+        } else if (modelSet.contains(model)) {
+            callModelServing(user, candidates, candidateScoreMap, model);
+        } else {
+            // default ranking in candidate set
+            System.out.println("[DEBUG] now using model: fallback");
+            for (int i = 0 ; i < candidates.size(); i++){
+                candidateScoreMap.put(candidates.get(i), (double)(candidates.size() - i));
+            }
         }
 
         List<Movie> rankedList = new ArrayList<>();
@@ -114,50 +112,13 @@ public class RecForYouProcess {
     }
 
     /**
-     * call TenserFlow serving to get the NeuralCF model inference result
+     * call TenserFlow serving to get model inference result
      * @param user              input user
      * @param candidates        candidate movies
      * @param candidateScoreMap save prediction score into the score map
+     * @param model             model name
      */
-    public static void callNeuralCFTFServing(User user, List<Movie> candidates, HashMap<Movie, Double> candidateScoreMap){
-        if (null == user || null == candidates || candidates.size() == 0){
-            return;
-        }
-
-        JSONArray instances = new JSONArray();
-        for (Movie m : candidates){
-            JSONObject instance = new JSONObject();
-            instance.put(USER_ID, user.getUserId());
-
-            instance.put(MOVIE_ID, m.getMovieId());
-
-            instances.put(instance);
-        }
-
-        JSONObject instancesRoot = new JSONObject();
-        instancesRoot.put("instances", instances);
-
-        //need to confirm the tf serving end point
-        String predictionScores = asyncSinglePostRequest("http://localhost:8501/v1/models/recmodel:predict", instancesRoot.toString());
-        System.out.println("using model: neurallcf");
-        System.out.println("send user" + user.getUserId() + " request to tf serving.");
-        System.out.println("instancesRoot string is: " + instancesRoot.toString());
-        System.out.println("prediction score is: " + predictionScores);
-
-        JSONObject predictionsObject = new JSONObject(predictionScores);
-        JSONArray scores = predictionsObject.getJSONArray("predictions");
-        for (int i = 0 ; i < candidates.size(); i++){
-            candidateScoreMap.put(candidates.get(i), scores.getJSONArray(i).getDouble(0));
-        }
-    }
-
-    /**
-     * call TenserFlow serving to get the WideNDeep model inference result
-     * @param user              input user
-     * @param candidates        candidate movies
-     * @param candidateScoreMap save prediction score into the score map
-     */
-    public static void callWideNDeepServing(User user, List<Movie> candidates, HashMap<Movie, Double> candidateScoreMap){
+    public static void callModelServing(User user, List<Movie> candidates, HashMap<Movie, Double> candidateScoreMap, String model){
         if (null == user || null == candidates || candidates.size() == 0){
             return;
         }
@@ -167,24 +128,28 @@ public class RecForYouProcess {
             JSONObject instance = new JSONObject();
             instance.put(USER_ID, user.getUserId());
             instance.put(MOVIE_ID, m.getMovieId());
-            // movie features
-            instance.put(FEATURE_MOVIE_GENRE_1,m.getMovieFeatures().get(FEATURE_MOVIE_GENRE_1));
-            instance.put(FEATURE_MOVIE_GENRE_2,m.getMovieFeatures().get(FEATURE_MOVIE_GENRE_2));
-            instance.put(FEATURE_MOVIE_GENRE_3,m.getMovieFeatures().get(FEATURE_MOVIE_GENRE_3));
-            instance.put(FEATURE_MOVIE_RELEASE_YEAR, Integer.parseInt(m.getMovieFeatures().get(FEATURE_MOVIE_RELEASE_YEAR)));
-            instance.put(FEATURE_MOVIE_RATING_COUNT, Integer.parseInt(m.getMovieFeatures().get(FEATURE_MOVIE_RATING_COUNT)));
-            instance.put(FEATURE_MOVIE_AVG_RATING, Float.parseFloat(m.getMovieFeatures().get(FEATURE_MOVIE_AVG_RATING)));
-            instance.put(FEATURE_MOVIE_RATING_STDDEV, Float.parseFloat(m.getMovieFeatures().get(FEATURE_MOVIE_RATING_STDDEV)));
-            // user features
-            instance.put(FEATURE_USER_RATING_COUNT, Integer.parseInt(user.getUserFeatures().get(FEATURE_USER_RATING_COUNT)));
-            instance.put(FEATURE_USER_AVG_RATING, Float.parseFloat(user.getUserFeatures().get(FEATURE_USER_AVG_RATING)));
-            instance.put(FEATURE_USER_GENRE_1, user.getUserFeatures().get(FEATURE_USER_GENRE_1));
-            instance.put(FEATURE_USER_GENRE_2, user.getUserFeatures().get(FEATURE_USER_GENRE_2));
-            instance.put(FEATURE_USER_GENRE_3, user.getUserFeatures().get(FEATURE_USER_GENRE_3));
-            instance.put(FEATURE_USER_GENRE_4, user.getUserFeatures().get(FEATURE_USER_GENRE_4));
-            instance.put(FEATURE_USER_GENRE_5, user.getUserFeatures().get(FEATURE_USER_GENRE_5));
-            instance.put(FEATURE_USER_RATING_STDDEV, Float.parseFloat(user.getUserFeatures().get(FEATURE_USER_RATING_STDDEV)));
-            instance.put(FEATURE_USER_RATED_MOVIE_1, Integer.parseInt(user.getUserFeatures().get(FEATURE_USER_RATED_MOVIE_1)));
+            if (EMBEDDING_MLP.equals(model) || WIDE_N_DEEP.equals(model)) {
+                // movie features
+                instance.put(FEATURE_MOVIE_GENRE_1,m.getMovieFeatures().get(FEATURE_MOVIE_GENRE_1));
+                instance.put(FEATURE_MOVIE_GENRE_2,m.getMovieFeatures().get(FEATURE_MOVIE_GENRE_2));
+                instance.put(FEATURE_MOVIE_GENRE_3,m.getMovieFeatures().get(FEATURE_MOVIE_GENRE_3));
+                instance.put(FEATURE_MOVIE_RELEASE_YEAR, Integer.parseInt(m.getMovieFeatures().get(FEATURE_MOVIE_RELEASE_YEAR)));
+                instance.put(FEATURE_MOVIE_RATING_COUNT, Integer.parseInt(m.getMovieFeatures().get(FEATURE_MOVIE_RATING_COUNT)));
+                instance.put(FEATURE_MOVIE_AVG_RATING, Float.parseFloat(m.getMovieFeatures().get(FEATURE_MOVIE_AVG_RATING)));
+                instance.put(FEATURE_MOVIE_RATING_STDDEV, Float.parseFloat(m.getMovieFeatures().get(FEATURE_MOVIE_RATING_STDDEV)));
+                // user features
+                instance.put(FEATURE_USER_RATING_COUNT, Integer.parseInt(user.getUserFeatures().get(FEATURE_USER_RATING_COUNT)));
+                instance.put(FEATURE_USER_AVG_RATING, Float.parseFloat(user.getUserFeatures().get(FEATURE_USER_AVG_RATING)));
+                instance.put(FEATURE_USER_GENRE_1, user.getUserFeatures().get(FEATURE_USER_GENRE_1));
+                instance.put(FEATURE_USER_GENRE_2, user.getUserFeatures().get(FEATURE_USER_GENRE_2));
+                instance.put(FEATURE_USER_GENRE_3, user.getUserFeatures().get(FEATURE_USER_GENRE_3));
+                instance.put(FEATURE_USER_GENRE_4, user.getUserFeatures().get(FEATURE_USER_GENRE_4));
+                instance.put(FEATURE_USER_GENRE_5, user.getUserFeatures().get(FEATURE_USER_GENRE_5));
+                instance.put(FEATURE_USER_RATING_STDDEV, Float.parseFloat(user.getUserFeatures().get(FEATURE_USER_RATING_STDDEV)));
+            }
+            if (WIDE_N_DEEP.equals(model)) {
+                instance.put(FEATURE_USER_RATED_MOVIE_1, Integer.parseInt(user.getUserFeatures().get(FEATURE_USER_RATED_MOVIE_1)));
+            }
 
             instances.put(instance);
         }
@@ -193,10 +158,11 @@ public class RecForYouProcess {
         instancesRoot.put("instances", instances);
 
         //need to confirm the tf serving end point
-        String predictionScores = asyncSinglePostRequest("http://localhost:8501/v1/models/recmodel:predict", instancesRoot.toString());
-        System.out.println("[DEBUG] now using model: widendeep");
+        String host = "http://localhost:8501/v1/models/" + model + ":predict";
+        String predictionScores = asyncSinglePostRequest(host, instancesRoot.toString());
+        System.out.println("[DEBUG] now using model: " + model);
         System.out.println("[DEBUG] send user" + user.getUserId() + " request to tf serving.");
-        System.out.println("[DEBUG] instancesRoot string is: " + instancesRoot.toString());
+        System.out.println("[DEBUG] instancesRoot string is: " + instancesRoot.toString().substring(0, 200) + "...");
         System.out.println("[DEBUG] prediction score is: " + predictionScores);
 
         JSONObject predictionsObject = new JSONObject(predictionScores);
@@ -205,4 +171,5 @@ public class RecForYouProcess {
             candidateScoreMap.put(candidates.get(i), scores.getJSONArray(i).getDouble(0));
         }
     }
+
 }
