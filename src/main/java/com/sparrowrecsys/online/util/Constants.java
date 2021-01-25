@@ -7,6 +7,8 @@ public class Constants {
   public static final String USER_FEATURE_PREFIX= "uf:";
   public static final String REDIS_KEY_PREFIX_USER_EMBEDDING = "uEmb";
   public static final String REDIS_KEY_PREFIX_ITEM2VEC_EMBEDDING = "i2vEmb";
+  public static final String REDIS_KEY_PREFIX_ITEM2VEC_EMBEDDING_BUCKET = "lsh";
+
 
   public static final String FEATURE_MOVIE_GENRE_1 = "movieGenre1";
   public static final String FEATURE_MOVIE_GENRE_2 = "movieGenre2";

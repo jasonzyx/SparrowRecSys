@@ -1,15 +1,20 @@
 package com.sparrowrecsys.online.datamanager;
 
+import com.sparrowrecsys.online.model.Embedding;
 import com.sparrowrecsys.online.util.Config;
 import com.sparrowrecsys.online.util.Utility;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 
 import static com.sparrowrecsys.online.util.Constants.*;
+import static sun.misc.Version.*;
+
 
 /**
  * DataManager is an utility class, takes charge of all data loading logic.
@@ -42,11 +47,11 @@ public class DataManager {
     }
 
     //load data from file system including movie, rating, link data and model data like embedding vectors.
-    public void loadData(String movieDataPath, String linkDataPath, String ratingDataPath, String movieEmbPath, String userEmbPath, String movieRedisKey, String userRedisKey) throws Exception{
+    public void loadData(String movieDataPath, String linkDataPath, String ratingDataPath, String movieEmbPath, String userEmbPath, String movieEmbKey, String movieEmbBucketKey, String userRedisKey) throws Exception{
         loadMovieData(movieDataPath);
         loadLinkData(linkDataPath);
         loadRatingData(ratingDataPath);
-        loadMovieEmb(movieEmbPath, movieRedisKey);
+        loadMovieEmb(movieEmbPath, movieEmbKey, movieEmbBucketKey);
         if (Config.IS_LOAD_ITEM_FEATURE_FROM_REDIS){
             loadMovieFeatures("mf:");
         }
@@ -92,7 +97,7 @@ public class DataManager {
     }
 
     //load movie embedding
-    private void loadMovieEmb(String movieEmbPath, String embKey) throws Exception{
+    private void loadMovieEmb(String movieEmbPath, String embKey, String embBucketKey) throws Exception{
         if (Config.EMB_DATA_SOURCE.equals(Config.DATA_SOURCE_FILE)) {
             System.out.println("Loading movie embedding from " + movieEmbPath + " ...");
             int validEmbCount = 0;
@@ -112,20 +117,32 @@ public class DataManager {
             }
             System.out.println("Loading movie embedding completed. " + validEmbCount + " movie embeddings in total.");
         }else{
-            System.out.println("Loading movie embedding from Redis ...");
-            Set<String> movieEmbKeys = RedisClient.getInstance().keys(embKey + "*");
-            int validEmbCount = 0;
-            for (String movieEmbKey : movieEmbKeys){
-                String movieId = movieEmbKey.split(":")[1];
-                Movie m = getMovieById(Integer.parseInt(movieId));
-                if (null == m) {
-                    continue;
-                }
-                m.setEmb(Utility.parseEmbStr(RedisClient.getInstance().get(movieEmbKey)));
-                validEmbCount++;
-            }
-            System.out.println("Loading movie embedding completed. " + validEmbCount + " movie embeddings in total.");
+            loadMovieEmbeddingFromRedis(embKey);
+            loadMovieEmbeddingFromRedis(embBucketKey);
         }
+    }
+
+    private void loadMovieEmbeddingFromRedis(String prefix) throws Exception{
+        System.out.println("Loading movie embeddings from Redis by prefix: " + prefix + "...");
+        Set<String> movieEmbKeys = RedisClient.getInstance().keys(prefix + "*");
+        int validEmbCount = 0;
+        for (String movieEmbKey : movieEmbKeys){
+            String movieId = movieEmbKey.split(":")[1];
+            if ("".equals(movieId)) continue;
+            Movie m = getMovieById(Integer.parseInt(movieId));
+            if (null == m) {
+                continue;
+            }
+            if (REDIS_KEY_PREFIX_ITEM2VEC_EMBEDDING_BUCKET.equals(prefix)) {
+                // loading bucket data
+                m.setEmdBucket(Utility.parseEmbStr(RedisClient.getInstance().get(movieEmbKey)));
+            } else {
+                m.setEmb(Utility.parseEmbStr(RedisClient.getInstance().get(movieEmbKey)));
+            }
+            validEmbCount++;
+
+        }
+        System.out.println("Loading movie embedding completed. " + validEmbCount + " movie embeddings in total.");
     }
 
     //load movie features
@@ -285,6 +302,29 @@ public class DataManager {
                 return movies.subList(0, size);
             }
             return movies;
+    }
+
+    //get top N movies order by sortBy method
+    public List<Movie> getMoviesByLSH(Movie movie, int size) {
+        List<Movie> movies = new ArrayList<>(movieMap.values());
+        Set<Float> bucketSet = new HashSet<Float>(movie.getEmbBucket().getEmbVector());
+        HashSet<Movie> candidateSet = new HashSet<>();
+        for (Movie m : movies) {
+            if (null == m.getEmbBucket()) { continue;}
+            ArrayList<Float> buckets = m.getEmbBucket().getEmbVector();
+            for (Float bucket : buckets) {
+                // if a movie fall into any of the bucket, it's in the candidate.
+                if (bucketSet.contains(bucket)) {
+                    candidateSet.add(m);
+                    continue;
+                }
+            }
+        }
+        List<Movie> candidates = new ArrayList<Movie>(candidateSet);
+        if (candidates.size() > size){
+            return candidates.subList(0, size);
+        }
+        return candidates;
     }
 
     //get movie object by movie id

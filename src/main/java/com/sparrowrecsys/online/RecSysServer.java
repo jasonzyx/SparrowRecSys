@@ -57,7 +57,7 @@ public class RecSysServer {
                 webRootUri.getPath() + "sampledata/links.csv",webRootUri.getPath() + "sampledata/ratings.csv",
                 webRootUri.getPath() + "modeldata/item2vecEmb.csv",
                 webRootUri.getPath() + "modeldata/userEmb.csv",
-                REDIS_KEY_PREFIX_ITEM2VEC_EMBEDDING, REDIS_KEY_PREFIX_USER_EMBEDDING);
+                REDIS_KEY_PREFIX_ITEM2VEC_EMBEDDING, REDIS_KEY_PREFIX_ITEM2VEC_EMBEDDING_BUCKET, REDIS_KEY_PREFIX_USER_EMBEDDING);
 
         //create server context
         ServletContextHandler context = new ServletContextHandler();

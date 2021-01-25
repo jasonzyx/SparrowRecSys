@@ -28,6 +28,10 @@ public class Movie {
     @JsonIgnore
     Embedding emb;
 
+    // embedding bucket of the movie
+    @JsonIgnore
+    Embedding embBucket;
+
     //all rating scores list
     @JsonIgnore
     List<Rating> ratings;
@@ -47,6 +51,7 @@ public class Movie {
         this.ratings = new ArrayList<>();
         this.topRatings = new LinkedList<>();
         this.emb = null;
+        this.embBucket = null;
         this.movieFeatures = null;
     }
 
@@ -143,8 +148,14 @@ public class Movie {
         return emb;
     }
 
+    public Embedding getEmbBucket() {return embBucket;}
+
     public void setEmb(Embedding emb) {
         this.emb = emb;
+    }
+
+    public void setEmdBucket(Embedding embBucket) {
+        this.embBucket = embBucket;
     }
 
     public Map<String, String> getMovieFeatures() {

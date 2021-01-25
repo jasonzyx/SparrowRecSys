@@ -14,6 +14,12 @@ public class Config {
     public static boolean IS_LOAD_USER_FEATURE_FROM_REDIS = true;
     public static boolean IS_LOAD_ITEM_FEATURE_FROM_REDIS = true;
 
+    public static String RECALL_BY_EMBEDDING_LSH = "recallByLSH";
+    public static String RECALL_BY_NAIVE_FALLBACK = "fallback";
+
+    // any value other than RECALL_BY_EMBEDDING_LSH will fall back to naive generation
+    public static String RECALL_STRATEGY = RECALL_BY_EMBEDDING_LSH;
+
     public static boolean IS_ENABLE_AB_TEST = false;
 
 }

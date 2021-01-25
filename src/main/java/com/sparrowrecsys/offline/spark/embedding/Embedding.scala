@@ -6,9 +6,9 @@ import com.sparrowrecsys.online.factory.JedisFactory
 import com.sparrowrecsys.online.util.Config.{REDIS_ENDPOINT, REDIS_PORT}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
-import org.apache.spark.ml.feature.BucketedRandomProjectionLSH
-import org.apache.spark.ml.linalg.Vectors
+import org.apache.spark.ml.feature.{BucketedRandomProjectionLSH}
 import org.apache.spark.mllib.feature.{Word2Vec, Word2VecModel}
+import org.apache.spark.ml.linalg.{DenseVector, Vectors}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions._
@@ -16,6 +16,7 @@ import org.apache.spark.sql.{Row, SparkSession}
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.params.SetParams
 import com.sparrowrecsys.online.util.Constants._
+import org.apache.spark.ml.linalg.Vectors
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -136,7 +137,7 @@ object Embedding {
       redisClient.close()
     }
 
-    embeddingLSH(sparkSession, model.getVectors)
+    embeddingLSH(sparkSession, model.getVectors, true)
     model
   }
 
@@ -228,7 +229,7 @@ object Embedding {
     (transitionMatrix, itemDistribution)
   }
 
-  def embeddingLSH(spark:SparkSession, movieEmbMap:Map[String, Array[Float]]): Unit ={
+  def embeddingLSH(spark:SparkSession, movieEmbMap:Map[String, Array[Float]], saveToRedis:Boolean): Unit ={
 
     val movieEmbSeq = movieEmbMap.toSeq.map(item => (item._1, Vectors.dense(item._2.map(f => f.toDouble))))
     val movieEmbDF = spark.createDataFrame(movieEmbSeq).toDF(MOVIE_ID, EMBEDDING)
@@ -250,6 +251,23 @@ object Embedding {
     println("Approximately searching for 5 nearest neighbors of the sample embedding:")
     val sampleEmb = Vectors.dense(0.795,0.583,1.120,0.850,0.174,-0.839,-0.0633,0.249,0.673,-0.237)
     bucketModel.approxNearestNeighbors(movieEmbDF, sampleEmb, 5).show(truncate = false)
+
+    if (saveToRedis) {
+      val redisClient = jedisFactory.createRedisClient(REDIS_ENDPOINT, REDIS_PORT);
+
+      val params = SetParams.setParams()
+      //set ttl to 24hs
+      params.ex(60 * 60 * 24)
+
+      embBucketResult.collect().foreach(row => {
+        val movieId = row.getAs[String](0)
+        val bucketIds = row.getAs[mutable.WrappedArray[DenseVector]](2).flatMap(row => row.values)
+        redisClient.set(REDIS_KEY_PREFIX_ITEM2VEC_EMBEDDING_BUCKET + ":" + movieId, bucketIds.mkString(" "), params)
+      })
+
+      redisClient.close()
+    }
+
   }
 
   def graphEmb(samples : RDD[Seq[String]], sparkSession: SparkSession, embLength:Int, embOutputFilename:String, saveToRedis:Boolean, redisKeyPrefix:String): Word2VecModel ={
@@ -292,6 +310,5 @@ object Embedding {
     println("trainItem2vec: " + (t1 - t0)/1e9d + " sec")
     println("graphEmb: " + (t2 - t1)/1e9d + " sec")
     println("generateUserEmb: " + (t3 - t2)/1e9d + " sec")
-
   }
 }
