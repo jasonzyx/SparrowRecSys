@@ -2,11 +2,11 @@ import tensorflow as tf
 
 # Training samples path, change to your local path
 training_samples_file_path = tf.keras.utils.get_file("trainingSamples.csv",
-                                                     "file:///Users/zhiyxu/workspace/SparrowRecSys/src/main"
+                                                     "file:///Users/jasonxu/workspace/SparrowRecSys/src/main"
                                                      "/resources/webroot/sampledata/trainingSamples.csv")
 # Test samples path, change to your local path
 test_samples_file_path = tf.keras.utils.get_file("testSamples.csv",
-                                                 "file:///Users/zhiyxu/workspace/SparrowRecSys/src/main"
+                                                 "file:///Users/jasonxu/workspace/SparrowRecSys/src/main"
                                                  "/resources/webroot/sampledata/testSamples.csv")
 
 
@@ -96,7 +96,7 @@ for prediction, goodRating in zip(predictions[:12], list(test_dataset)[0][1][:12
 
 tf.keras.models.save_model(
     model,
-    "file:///Users/zhiyxu/workspace/SparrowRecSys/src/main/resources/webroot/modeldata/neuralcf/002",
+    "file:///Users/jasonxu/workspace/SparrowRecSys/src/main/resources/webroot/modeldata/neuralcf/002",
     overwrite=True,
     include_optimizer=True,
     save_format=None,
@@ -104,4 +104,4 @@ tf.keras.models.save_model(
     options=None
 )
 # run below command to deploy model
-# docker run -t --rm -p 8501:8501 -v "/Users/zhiyxu/workspace/SparrowRecSys/src/main/resources/webroot/modeldata/neuralcf:/models/recmodel" -e MODEL_NAME=recmodel tensorflow/serving &
+# docker run -t --rm -p 8501:8501 -v "/Users/jasonxu/workspace/SparrowRecSys/src/main/resources/webroot/modeldata/neuralcf:/models/recmodel" -e MODEL_NAME=recmodel tensorflow/serving &

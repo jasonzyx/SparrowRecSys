@@ -13,8 +13,7 @@ More features have been built here, including:
 * Start Tensorflow serving (multi-model, multi-version are configurable in `models.config`)  
 
 ``
-docker run -t --rm -p 8501:8501 \
-    -v "/Users/zhiyxu/workspace/SparrowRecSys/src/main/resources/webroot/modeldata/:/models/" 
+docker run -t --rm -p 8501:8501 -v "/Users/jasonxu/workspace/SparrowRecSys/src/main/resources/webroot/modeldata/:/models/" 
     tensorflow/serving --model_config_file=/models/models.config 
     --model_config_file_poll_wait_seconds=60``
     

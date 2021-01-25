@@ -14,6 +14,6 @@ public class Config {
     public static boolean IS_LOAD_USER_FEATURE_FROM_REDIS = true;
     public static boolean IS_LOAD_ITEM_FEATURE_FROM_REDIS = true;
 
-    public static boolean IS_ENABLE_AB_TEST = true;
+    public static boolean IS_ENABLE_AB_TEST = false;
 
 }
