@@ -1,6 +1,7 @@
 # Advanced SparrowRecSys
 This is a movie recommender system that's built on top of [SparrowRecSys](https://github.com/wzhe06/SparrowRecSys). 
-More features have been built here, including:
+More features have been built here, including:  
+* Implement recall layer by Locality Sensitive Hashing online (with pushed LS-hashing bucket in Redis) 
 * Serve multiple models (e.g., Wide&Deep, EmbeddingMLP, NeuralCf) online simultaneously
 * Train Embedding MLP offline with modification to prepare serving
 * Fetch features online from Redis store
@@ -24,6 +25,15 @@ docker run -t --rm -p 8501:8501 -v "/Users/jasonxu/workspace/SparrowRecSys/src/m
  `http://localhost:6010/user.html?id=6&model=embeddingmlp`  
  `http://localhost:6010/user.html?id=6&model=emb`
 
+# How to enable recall layer with embedding + LSH
+* Set ``RECALL_STRATEGY = RECALL_BY_EMBEDDING_LSH`` in class `Config`
+* Query models with different any movie ID:  
+
+``http://localhost:6010/movie.html?movieId=695``  
+
+You should be able to verify from running log on which recall strategy is being triggered.
+ 
+ 
 # How to enable A/B test  
 * **Follow above steps** to enable serving multiple Tensorflow models
 * Set ``IS_ENABLE_AB_TEST = true`` in class `Config`
