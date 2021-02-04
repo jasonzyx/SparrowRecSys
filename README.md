@@ -10,6 +10,11 @@ More features have been built here, including:
 
 # How to serve multiple Tensorflow models 
 * Fire up Redis (follow steps [here](https://redis.io/download))
+* Generate and push features to Redis by running the below two:
+
+  `Embedding.scala`
+  
+  `FeatureEngForRecModel.scala`
 * Make sure the corresponding model folders (e.g., `embeddingmlp`, `widendeeep`) exist under directory ``SparrowRecSys/src/main/resources/webroot/modeldata``
 * Start Tensorflow serving (multi-model, multi-version are configurable in `models.config`)  
 
@@ -18,6 +23,7 @@ docker run -t --rm -p 8501:8501 -v "/Users/jasonxu/workspace/SparrowRecSys/src/m
     tensorflow/serving --model_config_file=/models/models.config 
     --model_config_file_poll_wait_seconds=60``
     
+* Start the service by running `RecSysServer.java`
 * Go to below to query different models   
 
  `http://localhost:6010/user.html?id=6&model=widendeep`  
