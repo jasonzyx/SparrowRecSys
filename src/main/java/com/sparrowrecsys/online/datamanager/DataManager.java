@@ -1,20 +1,13 @@
 package com.sparrowrecsys.online.datamanager;
 
-import com.sparrowrecsys.online.model.Embedding;
 import com.sparrowrecsys.online.util.Config;
 import com.sparrowrecsys.online.util.Utility;
+
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 
-import static com.sparrowrecsys.online.util.Constants.*;
-import static sun.misc.Version.*;
-
+import static com.sparrowrecsys.online.util.Constants.FEATURE_MOVIE_RELEASE_YEAR;
+import static com.sparrowrecsys.online.util.Constants.REDIS_KEY_PREFIX_ITEM2VEC_EMBEDDING_BUCKET;
 
 /**
  * DataManager is an utility class, takes charge of all data loading logic.
