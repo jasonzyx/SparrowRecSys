@@ -1,5 +1,7 @@
 import tensorflow as tf
+import os
 
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
 # Training samples path, change to your local path
 training_samples_file_path = tf.keras.utils.get_file("trainingSamples.csv",
                                                      "file:///Users/jasonxu/workspace/SparrowRecSys/src/main"

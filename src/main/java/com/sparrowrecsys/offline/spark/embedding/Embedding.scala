@@ -112,7 +112,7 @@ object Embedding {
     val model = word2vec.fit(samples)
 
 
-    val synonyms = model.findSynonyms("158", 20)
+    val synonyms = model.findSynonyms("2", 20)
     for ((synonym, cosineSimilarity) <- synonyms) {
       println(s"$synonym $cosineSimilarity")
     }
@@ -137,7 +137,7 @@ object Embedding {
       redisClient.close()
     }
 
-    embeddingLSH(sparkSession, model.getVectors, true)
+    embeddingLSH(sparkSession, model.getVectors, saveToRedis)
     model
   }
 
